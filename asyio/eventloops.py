@@ -1,7 +1,7 @@
 import collections
 import heapq
 import time
-from asyio.handles import Handle, TimeHandle
+from asyio.asyio.handles import Handle, TimeHandle
 
 _event_loop = None
 
@@ -63,7 +63,7 @@ class Eventloop:
                 break
 
     def run_until_complete(self, fut):
-        from asyio.tasks import ensure_task
+        from asyio.asyio.tasks import ensure_task
         future = ensure_task(fut, self)
         self.run_forever()
 

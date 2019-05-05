@@ -1,6 +1,6 @@
-from asyio.errors import InvalidStateError
-from asyio.handles import Handle
-from asyio.eventloops import get_event_loop
+from asyio.asyio.errors import InvalidStateError
+from asyio.asyio.handles import Handle
+from asyio.asyio.eventloops import get_event_loop
 
 
 __all__ = ['Future', 'set_result_unless_cancelled']

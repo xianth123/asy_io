@@ -1,5 +1,5 @@
-from asyio.futures import Future, set_result_unless_cancelled
-from asyio.errors import RuntimeError
+from asyio.asyio.futures import Future, set_result_unless_cancelled
+from asyio.asyio.errors import RuntimeError
 
 
 __all__ = ['Task', 'sleep', 'ensure_task']
@@ -26,7 +26,7 @@ def sleep(delay, result=None, loop=None):
 
 
 def wait(futs, loop=None):
-    from asyio.eventloops import get_event_loop
+    from asyio.asyio.eventloops import get_event_loop
     if loop is None:
         loop = get_event_loop()
     for future in futs:
