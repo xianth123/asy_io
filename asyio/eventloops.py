@@ -2,6 +2,7 @@ import collections
 import heapq
 import time
 from asyio.asyio.handles import Handle, TimeHandle
+from asyio.asyio.errors import EventloopError
 
 _event_loop = None
 
@@ -15,6 +16,10 @@ def get_event_loop():
     return _event_loop
 
 
+def _complete_eventloop(fut):
+    fut._loop.stop()
+
+
 class Eventloop:
 
     def __init__(self):
@@ -23,6 +28,8 @@ class Eventloop:
         self._current_handle = None
         self._stopping = False
 
+    def stop(self):
+        self._stopping = True
 
     def call_soon(self, callback, *args):
         handle = Handle(callback, self, *args)
@@ -31,6 +38,8 @@ class Eventloop:
     def add_ready(self, handle):
         if isinstance(handle, Handle):
             self._ready.append(handle)
+        else:
+            raise EventloopError('only handle is allowed to join in ready')
 
     def call_later(self, delay, callback, *args):
         if not delay or delay < 0:
@@ -42,8 +51,6 @@ class Eventloop:
             heapq.heapify(self._scheduled)
 
     def run_once(self):
-        # print('ready ', self._ready)
-        # print('schedule', self._scheduled)
         if (not self._ready) and self._scheduled:
             while self._scheduled[0]._when <= time.time():
                 time_handle = heapq.heappop(self._scheduled)
@@ -53,7 +60,6 @@ class Eventloop:
         ntodo = len(self._ready)
         for i in range(ntodo):
             handle = self._ready.popleft()
-            # print('handle ', handle._callback, handle._args)
             handle._run()
 
     def run_forever(self):
@@ -65,5 +71,6 @@ class Eventloop:
     def run_until_complete(self, fut):
         from asyio.asyio.tasks import ensure_task
         future = ensure_task(fut, self)
+        future.add_done_callback(_complete_eventloop, future)
         self.run_forever()
 

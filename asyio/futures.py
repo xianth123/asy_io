@@ -15,6 +15,7 @@ class Future:
 
     _FINISHED = 'finished'
     _PENDING = 'pending'
+    _CANCELLED = 'CANCELLED'
 
     def __init__(self, loop=None):
         if loop is None:
@@ -43,8 +44,18 @@ class Future:
             handle = Handle(callback, self._loop, *args)
             self._callbacks.append(handle)
 
+    def cancel(self):
+        if self.status != self._PENDING:
+            return
+        self.status = self._CANCELLED
+        self._schedule_callbacks()
+        return
+
+    def cancelled(self):
+        return self.status == self._CANCELLED
+
     def done(self):
-        return self.status == self._FINISHED
+        return self.status != self._PENDING
 
     def result(self):
         if self.status != self._FINISHED:

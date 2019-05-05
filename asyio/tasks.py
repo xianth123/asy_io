@@ -2,7 +2,7 @@ from asyio.asyio.futures import Future, set_result_unless_cancelled
 from asyio.asyio.errors import RuntimeError
 
 
-__all__ = ['Task', 'sleep', 'ensure_task']
+__all__ = ['Task', 'sleep', 'ensure_task', 'wait']
 
 
 def ensure_task(coro_or_future, loop=None):
@@ -27,11 +27,23 @@ def sleep(delay, result=None, loop=None):
 
 def wait(futs, loop=None):
     from asyio.asyio.eventloops import get_event_loop
+
+    def _completed():
+        nonlocal counter
+        counter -= 1
+        if counter == 0:
+            if not waiter.done():
+                waiter.set_result(None)
+    tasks = []
     if loop is None:
         loop = get_event_loop()
     for future in futs:
         task = ensure_task(future, loop)
-
+        task.add_done_callback(_completed)
+        tasks.append(task)
+    counter = len(tasks)
+    waiter = Future(loop)
+    yield from waiter
 
 
 class Task(Future):
