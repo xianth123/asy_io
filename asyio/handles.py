@@ -1,4 +1,4 @@
-__all__ = ['Handle', 'TimeHandle']
+__all__ = ['Handle', 'DelayHandle', 'TimeHandle']
 
 
 class Handle:
@@ -10,6 +10,13 @@ class Handle:
 
     def _run(self):
         self._callback(*self._args)
+
+
+class DelayHandle(Handle):
+
+    def __init__(self, delay, callback, loop, *args):
+        super().__init__(callback, loop, *args)
+        self._delay = delay
 
 
 class TimeHandle(Handle):

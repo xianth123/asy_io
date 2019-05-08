@@ -1,6 +1,6 @@
-from asyio.asyio.errors import InvalidStateError
-from asyio.asyio.handles import Handle
-from asyio.asyio.eventloops import get_event_loop
+from .errors import InvalidStateError
+from .handles import Handle, DelayHandle
+from .eventloops import get_event_loop
 
 
 __all__ = ['Future', 'set_result_unless_cancelled']
@@ -22,14 +22,18 @@ class Future:
         else:
             self._loop = loop
         self._callbacks = []
+        self._delay_callbacks = []
         self.status = self._PENDING
         self._blocking = False
         self._result = None
 
     def _schedule_callbacks(self):
-        for callbacks in self._callbacks:
-            self._loop.add_ready(callbacks)
+        for callback in self._callbacks:
+            self._loop.add_ready(callback)
+        for delay_callback in self._delay_callbacks:
+            self._loop.add_delay(delay_callback)
         self._callbacks = []
+        self._delay_callbacks = []
 
     def set_result(self, result):
         self.status = self._FINISHED
@@ -42,6 +46,13 @@ class Future:
         else:
             handle = Handle(callback, self._loop, *args)
             self._callbacks.append(handle)
+
+    def add_delay_callback(self, delay, callback, *args):
+        if self.done():
+            self._loop.call_later(delay, callback, self._loop, *args)
+        else:
+            delay_handle = DelayHandle(delay, callback, self._loop, *args)
+            self._delay_callbacks.append(delay_handle)
 
     def done(self):
         return self.status == self._FINISHED
